@@ -45,14 +45,20 @@
     fetch(sheetUrl)
       .then(res => res.text())
       .then(csv => {
-        const rows = csv.split("\n").map(r => r.split(","));
-        riddles = rows.map(row => ({
+        // 處理換行符號，並切割成陣列
+        const rows = csv.trim().split(/\r?\n/).map(r => r.split(","));
+        // 跳過第一列標題
+        riddles = rows.slice(1).map(row => ({
           question: row[0],
           answer: row[1]
         }));
         // 隨機挑選題目
         currentRiddle = Math.floor(Math.random() * riddles.length);
         document.getElementById("riddle").textContent = riddles[currentRiddle].question;
+      })
+      .catch(err => {
+        document.getElementById("riddle").textContent = "題庫載入失敗，請檢查連結是否正確。";
+        console.error(err);
       });
 
     // 提交答案檢查
@@ -63,7 +69,7 @@
       if (userAnswer === riddles[currentRiddle].answer) {
         feedback.textContent = "答對了！🎉";
       } else {
-        feedback.textContent = "再想想!!!～";
+        feedback.textContent = "再想想～";
       }
     });
   </script>
