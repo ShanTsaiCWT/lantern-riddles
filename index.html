@@ -10,7 +10,7 @@
       background-color: #fff8e1;
       color: #333;
     }
-    #riddle-container {
+    #game-container {
       margin-top: 50px;
       padding: 20px;
       border: 2px solid #f57c00;
@@ -26,12 +26,29 @@
   </style>
 </head>
 <body>
-  <h1>猜燈謎</h1>
-  <div id="riddle-container">
-    <p id="riddle">載入中...</p>
-    <input type="text" id="answer" placeholder="輸入你的答案">
-    <button id="submit">提交</button>
-    <p id="feedback"></p>
+  <h1>猜燈謎遊戲</h1>
+  <div id="game-container">
+    <!-- 玩家 ID 輸入 -->
+    <div id="id-section">
+      <p>請輸入你的玩家 ID：</p>
+      <input type="text" id="playerId" placeholder="玩家ID">
+      <button id="startBtn">開始遊戲</button>
+    </div>
+
+    <!-- 題目區 -->
+    <div id="quiz-section" style="display:none;">
+      <p id="riddle">題目載入中...</p>
+      <input type="text" id="answer" placeholder="輸入你的答案">
+      <button id="submit">提交答案</button>
+      <p id="feedback"></p>
+      <p id="progress"></p>
+    </div>
+
+    <!-- 結果區 -->
+    <div id="result-section" style="display:none;">
+      <h2>遊戲結束！</h2>
+      <p id="final-score"></p>
+    </div>
   </div>
 
   <script>
@@ -39,39 +56,76 @@
     const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTML5xH0Jasxdab6Lp73qAeg26JjOo5V7eMFN3ETNQ0LOzYl3m28XPyJ72-r0Pg8YbtT3rmPl9lbdVs/pub?output=csv";
 
     let riddles = [];
-    let currentRiddle = 0;
+    let currentIndex = 0;
+    let score = 0;
+    let playerId = "";
 
-    // 從 Google Sheet CSV 抓題庫
-    fetch(sheetUrl)
-      .then(res => res.text())
-      .then(csv => {
-        // 處理換行符號，並切割成陣列
-        const rows = csv.trim().split(/\r?\n/).map(r => r.split(","));
-        // 跳過第一列標題
-        riddles = rows.slice(1).map(row => ({
-          question: row[0],
-          answer: row[1]
-        }));
-        // 隨機挑選題目
-        currentRiddle = Math.floor(Math.random() * riddles.length);
-        document.getElementById("riddle").textContent = riddles[currentRiddle].question;
-      })
-      .catch(err => {
-        document.getElementById("riddle").textContent = "題庫載入失敗，請檢查連結是否正確。";
-        console.error(err);
-      });
+    // 開始遊戲
+    document.getElementById("startBtn").addEventListener("click", () => {
+      playerId = document.getElementById("playerId").value.trim();
+      if (playerId === "") {
+        alert("請輸入玩家 ID！");
+        return;
+      }
+      document.getElementById("id-section").style.display = "none";
+      document.getElementById("quiz-section").style.display = "block";
 
-    // 提交答案檢查
+      // 從 Google Sheet 抓題庫
+      fetch(sheetUrl)
+        .then(res => res.text())
+        .then(csv => {
+          const rows = csv.trim().split(/\r?\n/).map(r => r.split(","));
+          riddles = rows.slice(1).map(row => ({
+            question: row[0],
+            answer: row[1]
+          }));
+
+          // 如果題庫超過 10 題，只取前 10 題
+          riddles = riddles.slice(0, 10);
+
+          loadRiddle();
+        })
+        .catch(err => {
+          document.getElementById("riddle").textContent = "題庫載入失敗，請檢查連結是否正確。";
+          console.error(err);
+        });
+    });
+
+    // 顯示題目
+    function loadRiddle() {
+      document.getElementById("riddle").textContent = riddles[currentIndex].question;
+      document.getElementById("progress").textContent = `第 ${currentIndex+1} 題 / 共 ${riddles.length} 題`;
+      document.getElementById("answer").value = "";
+      document.getElementById("feedback").textContent = "";
+    }
+
+    // 提交答案
     document.getElementById("submit").addEventListener("click", () => {
       const userAnswer = document.getElementById("answer").value.trim();
       const feedback = document.getElementById("feedback");
 
-      if (userAnswer === riddles[currentRiddle].answer) {
+      if (userAnswer === riddles[currentIndex].answer) {
         feedback.textContent = "答對了！🎉";
+        score++;
       } else {
-        feedback.textContent = "再想想～";
+        feedback.textContent = `答錯了～ 正確答案是：${riddles[currentIndex].answer}`;
+      }
+
+      currentIndex++;
+      if (currentIndex < riddles.length) {
+        setTimeout(loadRiddle, 1500); // 1.5秒後顯示下一題
+      } else {
+        showResult();
       }
     });
+
+    // 顯示分數
+    function showResult() {
+      document.getElementById("quiz-section").style.display = "none";
+      document.getElementById("result-section").style.display = "block";
+      document.getElementById("final-score").textContent = 
+        `玩家 ${playerId} 的分數是：${score} / ${riddles.length}`;
+    }
   </script>
 </body>
 </html>
