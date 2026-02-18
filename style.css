@@ -1,0 +1,15 @@
+body {
+  font-family: "Microsoft JhengHei", sans-serif;
+  text-align: center;
+  background-color: #fff8e1;
+  color: #333;
+}
+
+#riddle-container {
+  margin-top: 50px;
+  padding: 20px;
+  border: 2px solid #f57c00;
+  border-radius: 10px;
+  background-color: #fff3e0;
+  display: inline-block;
+}
