@@ -3,16 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <title>猜燈謎遊戲</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      text-align: center;
+      background-color: #fff8e1;
+      color: #333;
+    }
+    #riddle-container {
+      margin-top: 50px;
+      padding: 20px;
+      border: 2px solid #f57c00;
+      border-radius: 10px;
+      background-color: #fff3e0;
+      display: inline-block;
+    }
+    input, button {
+      margin-top: 10px;
+      padding: 8px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
   <h1>猜燈謎</h1>
   <div id="riddle-container">
-    <p id="riddle">這裡會顯示燈謎</p>
+    <p id="riddle">載入中...</p>
     <input type="text" id="answer" placeholder="輸入你的答案">
     <button id="submit">提交</button>
     <p id="feedback"></p>
   </div>
-  <script src="script.js"></script>
+
+  <script>
+    // ⚠️ 請替換成你自己的 Google Sheet 公開 CSV 連結
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTML5xH0Jasxdab6Lp73qAeg26JjOo5V7eMFN3ETNQ0LOzYl3m28XPyJ72-r0Pg8YbtT3rmPl9lbdVs/pub?output=csv";
+
+    let riddles = [];
+    let currentRiddle = 0;
+
+    // 從 Google Sheet CSV 抓題庫
+    fetch(sheetUrl)
+      .then(res => res.text())
+      .then(csv => {
+        const rows = csv.split("\n").map(r => r.split(","));
+        riddles = rows.map(row => ({
+          question: row[0],
+          answer: row[1]
+        }));
+        // 隨機挑選題目
+        currentRiddle = Math.floor(Math.random() * riddles.length);
+        document.getElementById("riddle").textContent = riddles[currentRiddle].question;
+      });
+
+    // 提交答案檢查
+    document.getElementById("submit").addEventListener("click", () => {
+      const userAnswer = document.getElementById("answer").value.trim();
+      const feedback = document.getElementById("feedback");
+
+      if (userAnswer === riddles[currentRiddle].answer) {
+        feedback.textContent = "答對了！🎉";
+      } else {
+        feedback.textContent = "再想想～";
+      }
+    });
+  </script>
 </body>
 </html>
